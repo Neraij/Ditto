@@ -3,7 +3,7 @@ import torch
 import os
 from diffsynth import save_video, VideoData
 from diffsynth.pipelines.wan_video_new import WanVideoPipeline, ModelConfig
-
+import time
 
 def main(args):
 
@@ -41,6 +41,7 @@ def main(args):
     video = [video[i] for i in range(num_frames)]
     
     reference_image = None
+    start = time.perf_counter()
 
     video = pipe(
         prompt=args.prompt,
@@ -52,18 +53,20 @@ def main(args):
         tiled=True,
     )
 
-    output_dir = os.path.dirname(args.output_video)
+    end = time.perf_counter()
+    print(f"Generation time: {end - start:.2f} seconds")
+    duration = end - start
+    output_dir = os.path.dirname(args.output_video_dir)
     if output_dir:
         os.makedirs(output_dir, exist_ok=True)
     
-    save_video(video, args.output_video, fps=args.fps, quality=args.quality)
-
+    save_video(video, f"{args.output_video_dir}/{args.input_video}_{num_frames}frame_{duration:.5f}.mp4", fps=args.fps, quality=args.quality)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="InstructV2V Pipeline.")
 
     parser.add_argument("--input_video", type=str, required=True, help="Path to the input video file.")
-    parser.add_argument("--output_video", type=str, required=True, help="Path to save the output video file.")
+    parser.add_argument("--output_video_dir", type=str, required=True, help="Path to save the output video file.")
     parser.add_argument("--lora_path", type=str, default=None, help="Optional path to a LoRA model file (.safetensors).")
     parser.add_argument("--device_id", type=int, default=0, help="The ID of the CUDA device to use (e.g., 0, 1, 2).")
     parser.add_argument("--prompt", type=str, required=True, help="The positive prompt describing the target style.")

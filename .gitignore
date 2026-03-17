@@ -1,0 +1,38 @@
+# --- Python 缓存 ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# --- 模型权重与大型二进制文件 (非常重要) ---
+# 屏蔽 models 目录下除说明文件外的内容，或者指定屏蔽
+models/
+!models/.gitkeep
+*.safetensors
+*.ckpt
+*.pth
+*.bin
+*.sh
+
+# --- 运行结果与临时文件 ---
+results/
+outputs/
+*.mp4
+*.png
+*.jpg
+*.jpeg
+
+# --- IDE 与 系统文件 ---
+.vscode/
+.idea/
+.DS_Store
+*.swp
+
+# --- 环境与包管理 ---
+.venv/
+env/
+venv/
+lib/
+bin/
+include/
+Anaconda3-*.sh

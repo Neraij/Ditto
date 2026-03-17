@@ -1,3 +1,4 @@
+from diffsynth.models import model_manager
 import torch, warnings, glob, os, types
 import numpy as np
 from PIL import Image
@@ -348,34 +349,44 @@ class WanVideoPipeline(BasePipeline):
         redirect_common_files: bool = True,
         use_usp=False,
     ):
-        # Redirect model path
-        if redirect_common_files:
-            redirect_dict = {
-                "models_t5_umt5-xxl-enc-bf16.pth": "Wan-AI/Wan2.1-T2V-1.3B",
-                "Wan2.1_VAE.pth": "Wan-AI/Wan2.1-T2V-1.3B",
-                "models_clip_open-clip-xlm-roberta-large-vit-huge-14.pth": "Wan-AI/Wan2.1-I2V-14B-480P",
-            }
-            for model_config in model_configs:
-                if model_config.origin_file_pattern is None or model_config.model_id is None:
-                    continue
-                if model_config.origin_file_pattern in redirect_dict and model_config.model_id != redirect_dict[model_config.origin_file_pattern]:
-                    print(f"To avoid repeatedly downloading model files, ({model_config.model_id}, {model_config.origin_file_pattern}) is redirected to ({redirect_dict[model_config.origin_file_pattern]}, {model_config.origin_file_pattern}). You can use `redirect_common_files=False` to disable file redirection.")
-                    model_config.model_id = redirect_dict[model_config.origin_file_pattern]
+        # # Redirect model path
+        # if redirect_common_files:
+        #     redirect_dict = {
+        #         "models_t5_umt5-xxl-enc-bf16.pth": "Wan-AI/Wan2.1-T2V-1.3B",
+        #         "Wan2.1_VAE.pth": "Wan-AI/Wan2.1-T2V-1.3B",
+        #         "models_clip_open-clip-xlm-roberta-large-vit-huge-14.pth": "Wan-AI/Wan2.1-I2V-14B-480P",
+        #     }
+        #     for model_config in model_configs:
+        #         if model_config.origin_file_pattern is None or model_config.model_id is None:
+        #             continue
+        #         if model_config.origin_file_pattern in redirect_dict and model_config.model_id != redirect_dict[model_config.origin_file_pattern]:
+        #             print(f"To avoid repeatedly downloading model files, ({model_config.model_id}, {model_config.origin_file_pattern}) is redirected to ({redirect_dict[model_config.origin_file_pattern]}, {model_config.origin_file_pattern}). You can use `redirect_common_files=False` to disable file redirection.")
+        #             model_config.model_id = redirect_dict[model_config.origin_file_pattern]
         
         # Initialize pipeline
         pipe = WanVideoPipeline(device=device, torch_dtype=torch_dtype)
         if use_usp: pipe.initialize_usp()
         
+        model_configs=[
+            # VACE-14B 分片（包含 dit + vace）
+            ModelConfig(path=sorted(glob.glob("./models/Wan-AI/Wan2.1-VACE-14B/diffusion_pytorch_model*.safetensors")), offload_device="cpu"),
+            # text encoder（注意实际文件在 T2V-1.3B 目录下）
+            ModelConfig(path="./models/Wan-AI/Wan2.1-T2V-1.3B/models_t5_umt5-xxl-enc-bf16.pth", offload_device="cpu"),
+            # VAE（同上）
+            ModelConfig(path="./models/Wan-AI/Wan2.1-T2V-1.3B/Wan2.1_VAE.pth", offload_device="cpu"),
+        ]
         # Download and load models
         model_manager = ModelManager()
         for model_config in model_configs:
-            model_config.download_if_necessary(use_usp=use_usp)
+            # model_config.download_if_necessary(use_usp=use_usp)
             model_manager.load_model(
                 model_config.path,
-                device=model_config.offload_device or device,
+                device,
                 torch_dtype=model_config.offload_dtype or torch_dtype
             )
-        
+
+
+
         # Load models
         pipe.text_encoder = model_manager.fetch_model("wan_video_text_encoder")
         dit = model_manager.fetch_model("wan_video_dit", index=2)
