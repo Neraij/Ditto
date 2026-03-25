@@ -12,7 +12,7 @@ models/
 *.ckpt
 *.pth
 *.bin
-*.sh
+
 
 # --- 运行结果与临时文件 ---
 results/

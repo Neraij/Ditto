@@ -1,9 +1,38 @@
 import argparse
 import torch
+from PIL import Image
 import os
 from diffsynth import save_video, VideoData
 from diffsynth.pipelines.wan_video_new import WanVideoPipeline, ModelConfig
 import time
+
+
+_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".bmp"}
+
+
+def load_vace_reference_images_from_dir(dir_path: str, height: int, width: int):
+    """
+    Load all images in a folder as RGB PIL Images, sorted by filename.
+    Resizes each to (width, height) to match pipeline inference size.
+    """
+    if not os.path.isdir(dir_path):
+        return None
+    paths = []
+    for name in sorted(os.listdir(dir_path)):
+        p = os.path.join(dir_path, name)
+        if os.path.isfile(p) and os.path.splitext(name.lower())[1] in _IMAGE_EXTS:
+            paths.append(p)
+    if not paths:
+        return None
+    out = []
+    for p in paths:
+        im = Image.open(p).convert("RGB")
+        if im.size != (width, height):
+            im = im.resize((width, height), Image.Resampling.LANCZOS)
+        out.append(im)
+    return out
+
+
 
 def main(args):
 
@@ -41,13 +70,29 @@ def main(args):
     video = [video[i] for i in range(num_frames)]
     
     reference_image = None
+
+    vace_reference_image = None
+    if args.vace_reference_dir:
+        if not os.path.isdir(args.vace_reference_dir):
+            print(f"Error: VACE reference directory not found: {args.vace_reference_dir}")
+            return
+        vace_reference_image = load_vace_reference_images_from_dir(
+            args.vace_reference_dir, args.height, args.width
+        )
+        if not vace_reference_image:
+            print(f"Error: No images ({', '.join(sorted(_IMAGE_EXTS))}) in {args.vace_reference_dir}")
+            return
+        print(f"Loaded {len(vace_reference_image)} VACE reference frame(s) from {args.vace_reference_dir}")
+
+
+
     start = time.perf_counter()
 
     video = pipe(
         prompt=args.prompt,
-        negative_prompt="色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+        negative_prompt="cgi, 3d, render, unreal engine, octane render, blender, digital art, plastic, wax, glossy, oily skin, airbrushed, photoshop, retouch, smooth skin, oversaturated, high contrast, vibrant, perfect, ideal, doll, mannequin, statue, shining, dreamy, fantasy, magical, cartoon, anime, illustration, sketch, painting, drawing, simplified, abstract, lowres, depth of field, bokeh, symmetry, centered, watermark, text, signature, blurry, low quality, artifacts, deformed, bad anatomy, artificial, fake, fake lighting, high saturation, grainless, manifold, jewelry, porcelain, synthetic, smooth texture, sharp edges, unreal lighting",
         vace_video=video,
-        vace_reference_image=reference_image,
+        vace_reference_image=vace_reference_image,
         num_frames=num_frames,
         seed=args.seed,
         tiled=True,
@@ -78,6 +123,11 @@ if __name__ == "__main__":
     parser.add_argument("--lora_alpha", type=float, default=1.0, help="The alpha (weight) value for the LoRA model.")
     parser.add_argument("--fps", type=int, default=20, help="Frames per second (FPS) for the output video.")
     parser.add_argument("--quality", type=int, default=5, help="Quality of the output video (CRF value, lower is better).")
-
+    parser.add_argument(
+        "--vace_reference_dir",
+        type=str,
+        default=None,
+        help="Optional folder of images (png/jpg/...) as vace_reference_image, sorted by filename; resized to height x width.",
+    )
     args = parser.parse_args()
     main(args)
