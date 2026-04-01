@@ -385,15 +385,19 @@ class WanVideoPipeline(BasePipeline):
                 torch_dtype=model_config.offload_dtype or torch_dtype
             )
 
-
+        print(model_manager.model_name)
+        print(model_manager.model_path)
 
         # Load models
         pipe.text_encoder = model_manager.fetch_model("wan_video_text_encoder")
         dit = model_manager.fetch_model("wan_video_dit", index=2)
         if isinstance(dit, list):
+            print("Two DiT models")
             pipe.dit, pipe.dit2 = dit
+            # for d in [pipe.dit, pipe.dit2]:
         else:
             pipe.dit = dit
+        
         pipe.vae = model_manager.fetch_model("wan_video_vae")
         pipe.image_encoder = model_manager.fetch_model("wan_video_image_encoder")
         pipe.motion_controller = model_manager.fetch_model("wan_video_motion_controller")
@@ -888,10 +892,10 @@ class WanVideoUnit_VACE(PipelineUnit):
             if vace_video is None:
                 vace_video = torch.zeros((1, 3, num_frames, height, width), dtype=pipe.torch_dtype, device=pipe.device)
             else:
-                vace_video = pipe.preprocess_video(vace_video)
+                vace_video = pipe.preprocess_video(vace_video)#1, 3, Tpix, H, W
             
             if vace_video_mask is None:
-                vace_video_mask = torch.ones_like(vace_video)
+                vace_video_mask = torch.ones_like(vace_video)#1, 3, Tpix, H, W
             else:
                 vace_video_mask = pipe.preprocess_video(vace_video_mask, min_value=0, max_value=1)
             
@@ -923,8 +927,30 @@ class WanVideoUnit_VACE(PipelineUnit):
                 vace_reference_latents = [u.unsqueeze(0) for u in vace_reference_latents]
 
                 vace_video_latents = torch.concat((*vace_reference_latents, vace_video_latents), dim=2)
-                vace_mask_latents = torch.concat((torch.zeros_like(vace_mask_latents[:, :, :f]), vace_mask_latents), dim=2)
-            
+                vace_mask_prefix = torch.zeros(
+                    (
+                        vace_mask_latents.shape[0],
+                        vace_mask_latents.shape[1],
+                        f,
+                        vace_mask_latents.shape[3],
+                        vace_mask_latents.shape[4],
+                    ),
+                    dtype=vace_mask_latents.dtype,
+                    device=vace_mask_latents.device,
+                )
+                vace_mask_latents = torch.concat((vace_mask_prefix, vace_mask_latents), dim=2)
+            # Debug shapes before concat on dim=1.
+            vv_shape = tuple(vace_video_latents.shape)
+            vm_shape = tuple(vace_mask_latents.shape)
+            print(f"[VACE_DEBUG] vace_video_latents shape={vv_shape}, dtype={vace_video_latents.dtype}, device={vace_video_latents.device}")
+            print(f"[VACE_DEBUG] vace_mask_latents  shape={vm_shape}, dtype={vace_mask_latents.dtype}, device={vace_mask_latents.device}")
+            print(
+                "[VACE_DEBUG] concat(dim=1) precheck: "
+                f"B={vv_shape[0]}=={vm_shape[0]}? {vv_shape[0] == vm_shape[0]}, "
+                f"T={vv_shape[2]}=={vm_shape[2]}? {vv_shape[2] == vm_shape[2]}, "
+                f"H={vv_shape[3]}=={vm_shape[3]}? {vv_shape[3] == vm_shape[3]}, "
+                f"W={vv_shape[4]}=={vm_shape[4]}? {vv_shape[4] == vm_shape[4]}"
+            )
             vace_context = torch.concat((vace_video_latents, vace_mask_latents), dim=1)
             return {"vace_context": vace_context, "vace_scale": vace_scale}
         else:
