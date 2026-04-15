@@ -1,0 +1,29 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: 调试 DitTo 推理",
+            "type": "python",
+            "request": "launch",
+            // 告诉 VS Code 用这个 python 运行你的程序
+            "python": "/data1/xs/Ditto/.venv/bin/python",
+            // 强制告诉调试插件用这个环境里的 debugpy 适配器
+            "debugAdapterPython": "/data1/xs/Ditto/.venv/bin/python",
+            "program": "${workspaceFolder}/inference/infer_ditto.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "args": [
+                "--lora_path", "models/ditto_global.safetensors",
+                "--num_frames", "73",
+                "--device_id", "0",
+                "--input_video", "output2.mp4",
+                "--output_video_dir", "results/4-14/",
+                "--prompt", "no extra objects, no additional vehicles, preserve original scene",
+                "--vace_reference_dir", "reference_folder/"
+            ]
+        }
+    ]
+}

@@ -23,7 +23,6 @@ outputs/
 *.jpeg
 
 # --- IDE 与 系统文件 ---
-.vscode/
 .idea/
 .DS_Store
 *.swp
