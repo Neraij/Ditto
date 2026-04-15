@@ -32,8 +32,6 @@ def load_vace_reference_images_from_dir(dir_path: str, height: int, width: int):
         out.append(im)
     return out
 
-
-
 def main(args):
 
     device = f"cuda:{args.device_id}"
@@ -71,18 +69,18 @@ def main(args):
     print(len(video), "frames loaded from video for processing.")
     reference_image = None
 
-    # vace_reference_image = None
-    # if args.vace_reference_dir:
-    #     if not os.path.isdir(args.vace_reference_dir):
-    #         print(f"Error: VACE reference directory not found: {args.vace_reference_dir}")
-    #         return
-    #     vace_reference_image = load_vace_reference_images_from_dir(
-    #         args.vace_reference_dir, args.height, args.width
-    #     )
-    #     if not vace_reference_image:
-    #         print(f"Error: No images ({', '.join(sorted(_IMAGE_EXTS))}) in {args.vace_reference_dir}")
-    #         return
-    #     print(f"Loaded {len(vace_reference_image)} VACE reference frame(s) from {args.vace_reference_dir}")
+    vace_reference_image = None
+    if args.vace_reference_dir:
+        if not os.path.isdir(args.vace_reference_dir):
+            print(f"Error: VACE reference directory not found: {args.vace_reference_dir}")
+            return
+        vace_reference_image = load_vace_reference_images_from_dir(
+            args.vace_reference_dir, args.height, args.width
+        )
+        if not vace_reference_image:
+            print(f"Error: No images ({', '.join(sorted(_IMAGE_EXTS))}) in {args.vace_reference_dir}")
+            return
+        print(f"Loaded {len(vace_reference_image)} VACE reference frame(s) from {args.vace_reference_dir}")
     zero_prefix_frames = min(20, len(video))
     vace_video_mask = []
     for i in range(len(video)):
@@ -100,7 +98,6 @@ def main(args):
         negative_prompt="cgi, 3d, render, unreal engine, octane render, blender, digital art, plastic, wax, glossy, oily skin, airbrushed, photoshop, retouch, smooth skin, oversaturated, high contrast, vibrant, perfect, ideal, doll, mannequin, statue, shining, dreamy, fantasy, magical, cartoon, anime, illustration, sketch, painting, drawing, simplified, abstract, lowres, depth of field, bokeh, symmetry, centered, watermark, text, signature, blurry, low quality, artifacts, deformed, bad anatomy, artificial, fake, fake lighting, high saturation, grainless, manifold, jewelry, porcelain, synthetic, smooth texture, sharp edges, unreal lighting",
         vace_video=video,
         vace_video_mask = vace_video_mask,
-        # vace_reference_image=vace_reference_image,
         num_frames=num_frames,
         seed=args.seed,
         tiled=True,

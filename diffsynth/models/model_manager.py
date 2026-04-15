@@ -393,7 +393,7 @@ class ModelManager:
 
 
     def load_model(self, file_path, model_names=None, device=None, torch_dtype=None):
-        print(f"Loading models from: {file_path}")
+        # print(f"Loading models from: {file_path}")
         if device is None: device = self.device
         if torch_dtype is None: torch_dtype = self.torch_dtype
         if isinstance(file_path, list):
