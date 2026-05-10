@@ -17,15 +17,13 @@
             },
             "args": [
                 "--lora_path", "models/ditto_global.safetensors",
-                "--num_frames", "73",
+                "--segment_size", "73",
                 "--device_id", "0",
                 "--negative_prompt", "cgi, 3d, render, unreal engine, octane render, blender, digital art, plastic, wax, glossy, oily skin, airbrushed, photoshop, retouch, smooth skin, oversaturated, high contrast, vibrant, perfect, ideal, doll, mannequin, statue, shining, dreamy, fantasy, magical, cartoon, anime, illustration, sketch, painting, drawing, simplified, abstract, lowres, depth of field, bokeh, symmetry, centered, watermark, text, signature, blurry, low quality, artifacts, deformed, bad anatomy, artificial, fake, fake lighting, high saturation, grainless, manifold, jewelry, porcelain, synthetic, smooth texture, sharp edges, unreal lighting",
-                "--input_video", "output2.mp4",
-                "--output_video_dir", "results/5月11/",
+                "--input_video", "测试数据.mp4",
+                "--output_dir", "results/5月11/",
                 "--first_prompt","A hyper-realistic cinematic shot of a heavy rainy day, maintaining the original scene structure. The road surface is wet asphalt with realistic puddles and accurate water reflections. Detailed falling rain streaks and a dense atmospheric rain veil fill the air. Cinematic lighting, overcast sky, hyper-detailed textures, 8k resolution, photorealistic.",
                 "--rest_prompt","no extra objects, no additional vehicles, preserve original scene, consistent lighting, same color tone, unchanged ambient illumination",
-                "--vace_reference_dir", "reference_folder/",
- 
             ]
         }
     ]
