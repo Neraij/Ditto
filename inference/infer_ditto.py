@@ -67,20 +67,20 @@ def main(args):
         
     video = [video[i] for i in range(num_frames)]
     print(len(video), "frames loaded from video for processing.")
-    reference_image = None
+    # reference_image = None
 
-    vace_reference_image = None
-    if args.vace_reference_dir:
-        if not os.path.isdir(args.vace_reference_dir):
-            print(f"Error: VACE reference directory not found: {args.vace_reference_dir}")
-            return
-        vace_reference_image = load_vace_reference_images_from_dir(
-            args.vace_reference_dir, args.height, args.width
-        )
-        if not vace_reference_image:
-            print(f"Error: No images ({', '.join(sorted(_IMAGE_EXTS))}) in {args.vace_reference_dir}")
-            return
-        print(f"Loaded {len(vace_reference_image)} VACE reference frame(s) from {args.vace_reference_dir}")
+    # vace_reference_image = None
+    # if args.vace_reference_dir:
+    #     if not os.path.isdir(args.vace_reference_dir):
+    #         print(f"Error: VACE reference directory not found: {args.vace_reference_dir}")
+    #         return
+    #     vace_reference_image = load_vace_reference_images_from_dir(
+    #         args.vace_reference_dir, args.height, args.width
+    #     )
+    #     if not vace_reference_image:
+    #         print(f"Error: No images ({', '.join(sorted(_IMAGE_EXTS))}) in {args.vace_reference_dir}")
+    #         return
+    #     print(f"Loaded {len(vace_reference_image)} VACE reference frame(s) from {args.vace_reference_dir}")
     zero_prefix_frames = min(20, len(video))
     vace_video_mask = []
     for i in range(len(video)):
@@ -95,7 +95,8 @@ def main(args):
 
     video = pipe(
         prompt=args.prompt,
-        negative_prompt="cgi, 3d, render, unreal engine, octane render, blender, digital art, plastic, wax, glossy, oily skin, airbrushed, photoshop, retouch, smooth skin, oversaturated, high contrast, vibrant, perfect, ideal, doll, mannequin, statue, shining, dreamy, fantasy, magical, cartoon, anime, illustration, sketch, painting, drawing, simplified, abstract, lowres, depth of field, bokeh, symmetry, centered, watermark, text, signature, blurry, low quality, artifacts, deformed, bad anatomy, artificial, fake, fake lighting, high saturation, grainless, manifold, jewelry, porcelain, synthetic, smooth texture, sharp edges, unreal lighting",
+        negative_prompt=args.negative_prompt or "",
+        cfg_scale=args.cfg_scale,
         vace_video=video,
         vace_video_mask = vace_video_mask,
         num_frames=num_frames,
@@ -124,8 +125,9 @@ if __name__ == "__main__":
     parser.add_argument("--width", type=int, default=832, help="The width to use for video processing.")
     parser.add_argument("--num_frames", type=int, default=73, help="The number of video frames to process.")
     parser.add_argument("--seed", type=int, default=1, help="Random seed for reproducible results.")
-
+    parser.add_argument("--negative_prompt", type=str, default=None, help="The negative prompt describing what to avoid in the output.")
     parser.add_argument("--lora_alpha", type=float, default=1.0, help="The alpha (weight) value for the LoRA model.")
+    parser.add_argument("--cfg_scale", type=float, default=2.6, help="Classifier-free guidance scale.")
     parser.add_argument("--fps", type=int, default=20, help="Frames per second (FPS) for the output video.")
     parser.add_argument("--quality", type=int, default=5, help="Quality of the output video (CRF value, lower is better).")
     parser.add_argument(
